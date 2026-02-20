@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velvet & Vine - Wedding Planner & Vendor Marketplace</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        header {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        h1 {
+            color: #ec4899;
+            font-size: 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #333;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        nav button:hover {
+            background: #f3f4f6;
+        }
+
+        nav button.active {
+            background: #ec4899;
+            color: white;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%);
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .hero h2 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: #6b7280;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            background: #ec4899;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #be185d;
+        }
+
+        .btn-outline {
+            background: white;
+            color: #ec4899;
+            border: 2px solid #ec4899;
+        }
+
+        .btn-outline:hover {
+            background: #fce7f3;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            padding: 4rem 0;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .vendors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            padding: 2rem 0;
+        }
+
+        .vendor-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .vendor-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .vendor-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #ec4899, #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+        }
+
+        .vendor-content {
+            padding: 1.5rem;
+        }
+
+        .vendor-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .vendor-category {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .vendor-rating {
+            color: #fbbf24;
+            margin-bottom: 1rem;
+        }
+
+        .vendor-price {
+            color: #ec4899;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .search-box {
+            margin: 2rem 0;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .search-box button {
+            padding: 0.75rem 1.5rem;
+            background: #ec4899;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .inquiry-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+
+        .inquiry-form textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            margin: 1rem 0;
+            font-family: inherit;
+        }
+
+        .inquiry-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .inquiry-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .inquiry-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-left: 1rem;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-responded {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-booked {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-declined {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        footer {
+            background: #1f2937;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1>💍 Velvet & Vine</h1>
+                <nav>
+                    <button class="nav-btn active" data-page="home">Home</button>
+                    <button class="nav-btn" data-page="marketplace">Marketplace</button>
+                    <button class="nav-btn" data-page="inquiries">My Inquiries</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- HOME PAGE -->
+    <div id="home" class="page active">
+        <div class="hero">
+            <div class="container">
+                <h2>Plan Your Perfect Wedding</h2>
+                <p>Discover and book the best wedding vendors all in one place</p>
+                <button class="btn" onclick="showPage('marketplace')">Browse Vendors</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">🛍️</div>
+                    <h3>Browse Vendors</h3>
+                    <p>Explore hundreds of wedding vendors in your area</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">❤️</div>
+                    <h3>Save Favorites</h3>
+                    <p>Save your favorite vendors for easy access</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💌</div>
+                    <h3>Send Inquiries</h3>
+                    <p>Contact vendors directly and track responses</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h3>Plan Timeline</h3>
+                    <p>Organize your wedding planning with ease</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MARKETPLACE PAGE -->
+    <div id="marketplace" class="page">
+        <div class="container">
+            <h2 style="margin: 2rem 0;">Vendor Marketplace</h2>
+            
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search vendors..." onkeyup="filterVendors()">
+                <button onclick="filterVendors()">Search</button>
+            </div>
+
+            <div class="vendors-grid" id="vendorsList"></div>
+        </div>
+    </div>
+
+    <!-- INQUIRIES PAGE -->
+    <div id="inquiries" class="page">
+        <div class="container">
+            <h2 style="margin: 2rem 0;">My Inquiries</h2>
+            <div class="inquiry-list" id="inquiriesList"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Velvet & Vine. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Sample vendors data
+        const vendors = [
+            {
+                id: 1,
+                name: "Elegant Photography",
+                category: "Photography",
+                rating: 4.9,
+                reviews: 127,
+                price: "$2,500 - $5,000",
+                emoji: "📸"
+            },
+            {
+                id: 2,
+                name: "Grand Ballroom Venue",
+                category: "Venue",
+                rating: 4.8,
+                reviews: 89,
+                price: "$3,000 - $8,000",
+                emoji: "🏛️"
+            },
+            {
+                id: 3,
+                name: "Sweet Delights Catering",
+                category: "Catering",
+                rating: 4.7,
+                reviews: 156,
+                price: "$75 - $150 per person",
+                emoji: "🍰"
+            },
+            {
+                id: 4,
+                name: "Bloom & Petals Florist",
+                category: "Flowers",
+                rating: 4.9,
+                reviews: 203,
+                price: "$1,500 - $3,500",
+                emoji: "🌹"
+            },
+            {
+                id: 5,
+                name: "Harmony Music & DJ",
+                category: "Entertainment",
+                rating: 4.6,
+                reviews: 98,
+                price: "$1,000 - $2,500",
+                emoji: "🎵"
+            },
+            {
+                id: 6,
+                name: "Glamour Beauty Studio",
+                category: "Beauty",
+                rating: 4.8,
+                reviews: 142,
+                price: "$200 - $500",
+                emoji: "💄"
+            }
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            displayVendors(vendors);
+            displayInquiries();
+            setupNavigation();
+        });
+
+        function setupNavigation() {
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    showPage(this.dataset.page);
+                });
+            });
+        }
+
+        function showPage(pageName) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageName).classList.add('active');
+            
+            // Update nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.page === pageName) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Refresh inquiries when showing that page
+            if (pageName === 'inquiries') {
+                displayInquiries();
+            }
+        }
+
+        function displayVendors(vendorList) {
+            const vendorsList = document.getElementById('vendorsList');
+            vendorsList.innerHTML = vendorList.map(vendor => `
+                <div class="vendor-card">
+                    <div class="vendor-image">${vendor.emoji}</div>
+                    <div class="vendor-content">
+                        <div class="vendor-name">${vendor.name}</div>
+                        <div class="vendor-category">${vendor.category}</div>
+                        <div class="vendor-rating">⭐ ${vendor.rating} (${vendor.reviews} reviews)</div>
+                        <div class="vendor-price">${vendor.price}</div>
+                        <button class="btn" onclick="sendInquiry(${vendor.id}, '${vendor.name}')">Send Inquiry</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterVendors() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = vendors.filter(v => 
+                v.name.toLowerCase().includes(searchTerm) || 
+                v.category.toLowerCase().includes(searchTerm)
+            );
+            displayVendors(filtered);
+        }
+
+        function sendInquiry(vendorId, vendorName) {
+            const message = prompt(`Send inquiry to ${vendorName}:\n\nTell them about your needs:`);
+            if (message) {
+                const inquiry = {
+                    id: Date.now(),
+                    vendorId: vendorId,
+                    vendorName: vendorName,
+                    message: message,
+                    date: new Date().toLocaleDateString(),
+                    status: 'pending'
+                };
+                
+                let inquiries = JSON.parse(localStorage.getItem('inquiries') || '[]');
+                inquiries.push(inquiry);
+                localStorage.setItem('inquiries', JSON.stringify(inquiries));
+                
+                alert('Inquiry sent successfully!');
+                showPage('inquiries');
+            }
+        }
+
+        function displayInquiries() {
+            const inquiriesList = document.getElementById('inquiriesList');
+            let inquiries = JSON.parse(localStorage.getItem('inquiries') || '[]');
+            
+            if (inquiries.length === 0) {
+                inquiriesList.innerHTML = '<p style="text-align: center; padding: 2rem; color: #6b7280;">No inquiries yet. Start by browsing vendors!</p>';
+                return;
+            }
+
+            inquiriesList.innerHTML = inquiries.map(inquiry => `
+                <div class="inquiry-item">
+                    <div>
+                        <strong>${inquiry.vendorName}</strong>
+                        <span class="inquiry-status status-${inquiry.status}">${inquiry.status.toUpperCase()}</span>
+                    </div>
+                    <div style="color: #6b7280; font-size: 0.9rem; margin: 0.5rem 0;">${inquiry.date}</div>
+                    <div style="margin: 1rem 0;">${inquiry.message}</div>
+                    <div style="display: flex; gap: 1rem;">
+                        <select onchange="updateStatus(${inquiry.id}, this.value)" style="padding: 0.5rem; border-radius: 4px; border: 1px solid #d1d5db;">
+                            <option value="pending" ${inquiry.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="responded" ${inquiry.status === 'responded' ? 'selected' : ''}>Responded</option>
+                            <option value="booked" ${inquiry.status === 'booked' ? 'selected' : ''}>Booked</option>
+                            <option value="declined" ${inquiry.status === 'declined' ? 'selected' : ''}>Declined</option>
+                        </select>
+                        <button class="btn btn-outline" onclick="deleteInquiry(${inquiry.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStatus(inquiryId, newStatus) {
+            let inquiries = JSON.parse(localStorage.getItem('inquiries') || '[]');
+            inquiries = inquiries.map(i => 
+                i.id === inquiryId ? { ...i, status: newStatus } : i
+            );
+            localStorage.setItem('inquiries', JSON.stringify(inquiries));
+            displayInquiries();
+        }
+
+        function deleteInquiry(inquiryId) {
+            if (confirm('Delete this inquiry?')) {
+                let inquiries = JSON.parse(localStorage.getItem('inquiries') || '[]');
+                inquiries = inquiries.filter(i => i.id !== inquiryId);
+                localStorage.setItem('inquiries', JSON.stringify(inquiries));
+                displayInquiries();
+            }
+        }
+    </script>
+</body>
+</html>
