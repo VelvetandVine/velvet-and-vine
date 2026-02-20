@@ -1,50 +1,7 @@
 {
   "version": 2,
   "buildCommand": "pnpm build",
-  "devCommand": "pnpm dev",
   "installCommand": "pnpm install",
   "framework": "vite",
-  "env": {
-    "DATABASE_URL": {
-      "description": "MySQL database connection string",
-      "required": true
-    },
-    "JWT_SECRET": {
-      "description": "Secret key for JWT session signing",
-      "required": true
-    },
-    "VITE_APP_ID": {
-      "description": "OAuth application ID",
-      "required": true
-    },
-    "OAUTH_SERVER_URL": {
-      "description": "OAuth server base URL",
-      "required": false,
-      "default": "https://api.manus.im"
-    },
-    "VITE_OAUTH_PORTAL_URL": {
-      "description": "OAuth portal URL for login",
-      "required": false,
-      "default": "https://oauth.manus.im"
-    },
-    "OWNER_OPEN_ID": {
-      "description": "Owner's OAuth ID",
-      "required": false
-    },
-    "OWNER_NAME": {
-      "description": "Owner's name",
-      "required": false
-    }
-  },
-  "buildOutputDirectory": "dist",
-  "routes": [
-    {
-      "src": "/api/.*",
-      "dest": "server/_core/index.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "client/dist/index.html"
-    }
-  ]
+  "buildOutputDirectory": "dist"
 }

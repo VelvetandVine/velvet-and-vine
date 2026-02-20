@@ -1,135 +1,106 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Heart, Store, MessageSquare } from "lucide-react";
-import { getLoginUrl } from "@/const";
-import { useLocation } from "wouter";
+import { Card } from "@/components/ui/card";
+import { ShoppingBag, Heart, MessageSquare, Calendar } from "lucide-react";
 
-export default function Home() {
-  const { user, loading, isAuthenticated, logout } = useAuth();
-  const [, setLocation] = useLocation();
+interface HomeProps {
+  onNavigate: (page: "marketplace" | "inquiries", vendorId?: number) => void;
+}
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50">
-        <Loader2 className="animate-spin text-pink-600 w-8 h-8" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50 p-4">
-        <div className="text-center max-w-md">
-          <Heart className="w-16 h-16 text-pink-600 mx-auto mb-6" />
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Wedding Planner</h1>
-          <p className="text-gray-600 mb-8">
-            Plan your perfect wedding with ease. Browse vendors, manage your wedding details, and connect with service providers all in one place.
-          </p>
-          <Button
-            onClick={() => (window.location.href = getLoginUrl())}
-            className="bg-pink-600 hover:bg-pink-700 text-white px-8 py-3 rounded-lg font-semibold"
-          >
-            Get Started
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
+export default function Home({ onNavigate }: HomeProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Heart className="w-8 h-8 text-pink-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Wedding Planner</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">{user?.name}</span>
-            <Button
-              variant="outline"
-              onClick={() => {
-                logout();
-                setLocation("/") as any;
-              }}
-              className="text-gray-700"
-            >
-              Logout
-            </Button>
-          </div>
+      <header className="bg-white shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <h1 className="text-4xl font-bold text-pink-600">Velvet & Vine</h1>
+          <p className="text-gray-600 mt-2">Wedding Planner & Vendor Marketplace</p>
         </div>
-      </div>
+      </header>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <Card className="mb-8 bg-white border-pink-200">
-          <CardHeader>
-            <CardTitle className="text-pink-600">Welcome to Your Wedding Planning Dashboard</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <main className="max-w-6xl mx-auto px-4 py-12">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <h2 className="text-5xl font-bold text-gray-900 mb-4">
+            Plan Your Perfect Wedding
+          </h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Discover and book the best wedding vendors all in one place
+          </p>
+          <Button
+            onClick={() => onNavigate("marketplace")}
+            size="lg"
+            className="bg-pink-600 hover:bg-pink-700 text-white px-8 py-6 text-lg"
+          >
+            Browse Vendors
+          </Button>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+            <ShoppingBag className="w-12 h-12 text-pink-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Browse Vendors</h3>
             <p className="text-gray-600">
-              Start planning your wedding by exploring our vendor marketplace, managing your guest list, and tracking your budget. Everything you need in one place!
+              Explore hundreds of wedding vendors in your area
             </p>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-white hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/marketplace") as any}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <Store className="w-5 h-5 text-indigo-600" />
-                Vendor Marketplace
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 text-sm">
-                Browse and discover wedding vendors in your area. View ratings, reviews, and pricing.
-              </p>
-              <Button variant="outline" className="mt-4 w-full">
-                Explore Vendors
-              </Button>
-            </CardContent>
           </Card>
 
-          <Card className="bg-white hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/my-inquiries") as any}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-blue-600" />
-                My Inquiries
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 text-sm">
-                Track your vendor inquiries and responses. Manage your communications in one place.
-              </p>
-              <Button variant="outline" className="mt-4 w-full">
-                View Inquiries
-              </Button>
-            </CardContent>
+          <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+            <Heart className="w-12 h-12 text-pink-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Save Favorites</h3>
+            <p className="text-gray-600">
+              Save your favorite vendors for easy access
+            </p>
           </Card>
 
-          <Card className="bg-white hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                <Heart className="w-5 h-5 text-red-600" />
-                Saved Vendors
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 text-sm">
-                Keep track of your favorite vendors. Save them for easy access later.
-              </p>
-              <Button variant="outline" className="mt-4 w-full">
-                View Saved
-              </Button>
-            </CardContent>
+          <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+            <MessageSquare className="w-12 h-12 text-pink-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Send Inquiries</h3>
+            <p className="text-gray-600">
+              Contact vendors directly and track responses
+            </p>
+          </Card>
+
+          <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+            <Calendar className="w-12 h-12 text-pink-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Plan Timeline</h3>
+            <p className="text-gray-600">
+              Organize your wedding planning with ease
+            </p>
           </Card>
         </div>
-      </div>
+
+        {/* CTA Section */}
+        <Card className="bg-gradient-to-r from-pink-600 to-purple-600 text-white p-12 text-center">
+          <h3 className="text-3xl font-bold mb-4">Ready to Find Your Vendors?</h3>
+          <p className="text-lg mb-6 opacity-90">
+            Start exploring our marketplace of trusted wedding professionals
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button
+              onClick={() => onNavigate("marketplace")}
+              className="bg-white text-pink-600 hover:bg-gray-100 px-8 py-2"
+            >
+              Browse Vendors
+            </Button>
+            <Button
+              onClick={() => onNavigate("inquiries")}
+              variant="outline"
+              className="border-white text-white hover:bg-white hover:text-pink-600 px-8 py-2"
+            >
+              My Inquiries
+            </Button>
+          </div>
+        </Card>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white mt-12 py-8">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <p>&copy; 2026 Velvet & Vine. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -1,374 +1,236 @@
-import { useState } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2, MapPin, DollarSign, Star, Phone, Globe, Mail, ArrowLeft, Heart } from "lucide-react";
-import { trpc } from "@/lib/trpc";
-import { useLocation, useRoute } from "wouter";
-import { toast } from "sonner";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Star, Mail, Phone, Globe } from "lucide-react";
 
-export default function VendorDetails() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
-  const [, setLocation] = useLocation();
-  const [, params] = useRoute("/vendor/:id");
-  const vendorId = params?.id ? parseInt(params.id) : null;
+interface Vendor {
+  id: number;
+  name: string;
+  category: string;
+  rating: number;
+  reviews: number;
+  price: string;
+  location: string;
+  image: string;
+  verified: boolean;
+  description?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+}
 
-  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+const VENDORS_DATA: Record<number, Vendor> = {
+  1: {
+    id: 1,
+    name: "Elegant Photography",
+    category: "Photography",
+    rating: 4.9,
+    reviews: 127,
+    price: "$2,500 - $5,000",
+    location: "New York, NY",
+    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&h=400&fit=crop",
+    verified: true,
+    description: "Professional wedding photography with artistic vision and attention to detail.",
+    email: "hello@elegantphoto.com",
+    phone: "(555) 123-4567",
+    website: "www.elegantphoto.com",
+  },
+  2: {
+    id: 2,
+    name: "Grand Ballroom Venue",
+    category: "Venue",
+    rating: 4.8,
+    reviews: 89,
+    price: "$3,000 - $8,000",
+    location: "Manhattan, NY",
+    image: "https://images.unsplash.com/photo-1519167758481-83f19106c6b6?w=600&h=400&fit=crop",
+    verified: true,
+    description: "Luxurious venue with stunning architecture and world-class amenities.",
+    email: "events@grandballroom.com",
+    phone: "(555) 234-5678",
+    website: "www.grandballroom.com",
+  },
+};
+
+interface VendorDetailsProps {
+  vendorId: number;
+  onNavigate: (page: "marketplace" | "inquiries") => void;
+}
+
+export default function VendorDetails({ vendorId, onNavigate }: VendorDetailsProps) {
+  const vendor = VENDORS_DATA[vendorId] || VENDORS_DATA[1];
+  const [inquiries, setInquiries] = useState<any[]>([]);
+  const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [inquiryMessage, setInquiryMessage] = useState("");
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewTitle, setReviewTitle] = useState("");
-  const [reviewContent, setReviewContent] = useState("");
-  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
-  const { data: vendor, isLoading: vendorLoading } = trpc.marketplace.getVendor.useQuery(vendorId || 0, {
-    enabled: !!vendorId,
-  });
-
-  const { data: reviews } = trpc.marketplace.getVendorReviews.useQuery(vendorId || 0, {
-    enabled: !!vendorId,
-  });
-
-  const { data: savedVendors } = trpc.marketplace.getSavedVendors.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
-
-  const createInquiryMutation = trpc.inquiries.create.useMutation({
-    onSuccess: () => {
-      toast.success("Inquiry sent successfully!");
-      setInquiryMessage("");
-      setIsInquiryOpen(false);
-    },
-    onError: () => {
-      toast.error("Failed to send inquiry");
-    },
-  });
-
-  const submitReviewMutation = trpc.marketplace.submitReview.useMutation({
-    onSuccess: () => {
-      toast.success("Review submitted successfully!");
-      setReviewTitle("");
-      setReviewContent("");
-      setReviewRating(5);
-      setIsReviewOpen(false);
-    },
-    onError: () => {
-      toast.error("Failed to submit review");
-    },
-  });
-
-  const saveVendorMutation = trpc.marketplace.saveVendor.useMutation();
-  const unsaveVendorMutation = trpc.marketplace.unsaveVendor.useMutation();
-
-  const isSaved = savedVendors?.some(v => v.id === vendorId);
-
-  const handleToggleSave = () => {
-    if (isSaved) {
-      unsaveVendorMutation.mutate(vendorId!);
-    } else {
-      saveVendorMutation.mutate(vendorId!);
+  useEffect(() => {
+    const saved = localStorage.getItem("inquiries");
+    if (saved) {
+      setInquiries(JSON.parse(saved));
     }
-  };
+  }, []);
 
   const handleSendInquiry = () => {
-    if (!inquiryMessage.trim()) {
-      toast.error("Please enter a message");
-      return;
-    }
-    createInquiryMutation.mutate({
-      vendorId: vendorId!,
+    if (!inquiryMessage.trim()) return;
+
+    const newInquiry = {
+      id: Date.now(),
+      vendorId: vendor.id,
+      vendorName: vendor.name,
       message: inquiryMessage,
-    });
+      date: new Date().toLocaleDateString(),
+      status: "pending",
+    };
+
+    const updated = [...inquiries, newInquiry];
+    setInquiries(updated);
+    localStorage.setItem("inquiries", JSON.stringify(updated));
+    setInquiryMessage("");
+    setShowInquiryForm(false);
+    alert("Inquiry sent successfully!");
   };
-
-  const handleSubmitReview = () => {
-    if (!reviewTitle.trim() || !reviewContent.trim()) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-    submitReviewMutation.mutate({
-      vendorId: vendorId!,
-      rating: reviewRating,
-      title: reviewTitle,
-      content: reviewContent,
-    });
-  };
-
-  if (authLoading || vendorLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="animate-spin text-pink-600 w-8 h-8" />
-      </div>
-    );
-  }
-
-  if (!vendor) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <Button
-          variant="ghost"
-          onClick={() => setLocation("/marketplace") as any}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        <div className="text-center py-12">
-          <p className="text-gray-600 text-lg">Vendor not found</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <header className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
           <Button
             variant="ghost"
-            onClick={() => setLocation("/marketplace") as any}
-            className="mb-4"
+            onClick={() => onNavigate("marketplace")}
+            className="p-0"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Marketplace
+            <ArrowLeft className="w-6 h-6" />
           </Button>
+          <h1 className="text-2xl font-bold text-pink-600">Vendor Details</h1>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Vendor Header */}
-        <Card className="mb-6 bg-white overflow-hidden">
-          {vendor.image && (
-            <div className="h-64 bg-gray-200 overflow-hidden">
-              <img src={vendor.image} alt={vendor.name} className="w-full h-full object-cover" />
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        {/* Vendor Image */}
+        <div className="mb-8">
+          <img
+            src={vendor.image}
+            alt={vendor.name}
+            className="w-full h-96 object-cover rounded-lg"
+          />
+        </div>
+
+        {/* Vendor Info */}
+        <Card className="p-8 mb-8">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h2 className="text-4xl font-bold mb-2">{vendor.name}</h2>
+              <p className="text-gray-600 text-lg">{vendor.category}</p>
             </div>
-          )}
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-3xl">{vendor.name}</CardTitle>
-                <p className="text-lg text-gray-600 mt-2">
-                  {vendor.category.charAt(0).toUpperCase() + vendor.category.slice(1)}
-                </p>
-              </div>
-              {isAuthenticated && (
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={handleToggleSave}
-                  className={isSaved ? "text-red-600" : ""}
-                >
-                  <Heart className={`w-6 h-6 ${isSaved ? "fill-current" : ""}`} />
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {vendor.description && (
-              <p className="text-gray-700">{vendor.description}</p>
+            {vendor.verified && (
+              <Badge className="bg-blue-100 text-blue-800 text-base">Verified</Badge>
             )}
+          </div>
 
-            {/* Rating */}
-            <div className="flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-400 fill-current" />
-              <span className="text-xl font-semibold">{vendor.rating || "0"}</span>
-              <span className="text-gray-600">({vendor.reviewCount || 0} reviews)</span>
+          {/* Rating */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-5 h-5 ${
+                    i < Math.floor(vendor.rating)
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300"
+                  }`}
+                />
+              ))}
             </div>
+            <span className="text-lg font-semibold">{vendor.rating}</span>
+            <span className="text-gray-600">({vendor.reviews} reviews)</span>
+          </div>
 
-            {/* Verification Badge */}
-            {vendor.isVerified && (
-              <div className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                ✓ Verified Vendor
-              </div>
-            )}
+          {/* Details */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <p className="text-gray-600 text-sm">Price Range</p>
+              <p className="text-xl font-semibold text-pink-600">{vendor.price}</p>
+            </div>
+            <div>
+              <p className="text-gray-600 text-sm">Location</p>
+              <p className="text-xl font-semibold">{vendor.location}</p>
+            </div>
+          </div>
 
-            {/* Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-6 border-t">
-              {vendor.location && (
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Location</p>
-                    <p className="font-medium">{vendor.location}</p>
-                  </div>
-                </div>
-              )}
+          {/* Description */}
+          <p className="text-gray-700 mb-6">{vendor.description}</p>
 
-              {(vendor.priceMin || vendor.priceMax) && (
-                <div className="flex items-center gap-3">
-                  <DollarSign className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Price Range</p>
-                    <p className="font-medium">
-                      {vendor.priceMin && `$${vendor.priceMin}`}
-                      {vendor.priceMin && vendor.priceMax && " - "}
-                      {vendor.priceMax && `$${vendor.priceMax}`}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {vendor.phone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Phone</p>
-                    <p className="font-medium">{vendor.phone}</p>
-                  </div>
-                </div>
-              )}
-
+          {/* Contact Info */}
+          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <h3 className="font-semibold mb-4">Contact Information</h3>
+            <div className="space-y-3">
               {vendor.email && (
                 <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Email</p>
-                    <p className="font-medium">{vendor.email}</p>
-                  </div>
+                  <Mail className="w-5 h-5 text-pink-600" />
+                  <a href={`mailto:${vendor.email}`} className="text-blue-600 hover:underline">
+                    {vendor.email}
+                  </a>
                 </div>
               )}
-
+              {vendor.phone && (
+                <div className="flex items-center gap-3">
+                  <Phone className="w-5 h-5 text-pink-600" />
+                  <a href={`tel:${vendor.phone}`} className="text-blue-600 hover:underline">
+                    {vendor.phone}
+                  </a>
+                </div>
+              )}
               {vendor.website && (
                 <div className="flex items-center gap-3">
-                  <Globe className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Website</p>
-                    <a href={vendor.website} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline">
-                      Visit Website
-                    </a>
-                  </div>
+                  <Globe className="w-5 h-5 text-pink-600" />
+                  <a href={`https://${vendor.website}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    {vendor.website}
+                  </a>
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Action Buttons */}
-            {isAuthenticated && (
-              <div className="flex gap-3 mt-6 pt-6 border-t">
-                <Dialog open={isInquiryOpen} onOpenChange={setIsInquiryOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="flex-1">Send Inquiry</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Send Inquiry to {vendor.name}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <Textarea
-                        placeholder="Tell the vendor about your wedding and what you're looking for..."
-                        value={inquiryMessage}
-                        onChange={(e) => setInquiryMessage(e.target.value)}
-                        rows={5}
-                      />
-                      <Button
-                        onClick={handleSendInquiry}
-                        disabled={createInquiryMutation.isPending}
-                        className="w-full"
-                      >
-                        {createInquiryMutation.isPending ? "Sending..." : "Send Inquiry"}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-
-                <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="flex-1">Leave Review</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Leave a Review for {vendor.name}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Rating (1-5 stars)</label>
-                        <div className="flex gap-2">
-                          {[1, 2, 3, 4, 5].map(star => (
-                            <button
-                              key={star}
-                              onClick={() => setReviewRating(star)}
-                              className="text-2xl"
-                            >
-                              <Star
-                                className={`w-6 h-6 ${
-                                  star <= reviewRating
-                                    ? "text-yellow-400 fill-current"
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <Input
-                        placeholder="Review title"
-                        value={reviewTitle}
-                        onChange={(e) => setReviewTitle(e.target.value)}
-                      />
-                      <Textarea
-                        placeholder="Share your experience..."
-                        value={reviewContent}
-                        onChange={(e) => setReviewContent(e.target.value)}
-                        rows={4}
-                      />
-                      <Button
-                        onClick={handleSubmitReview}
-                        disabled={submitReviewMutation.isPending}
-                        className="w-full"
-                      >
-                        {submitReviewMutation.isPending ? "Submitting..." : "Submit Review"}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            )}
-          </CardContent>
+          {/* Action Buttons */}
+          <div className="flex gap-4">
+            <Button
+              onClick={() => setShowInquiryForm(!showInquiryForm)}
+              className="bg-pink-600 hover:bg-pink-700 flex-1"
+            >
+              {showInquiryForm ? "Cancel" : "Send Inquiry"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => onNavigate("inquiries")}
+              className="flex-1"
+            >
+              View My Inquiries
+            </Button>
+          </div>
         </Card>
 
-        {/* Reviews Section */}
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle>Customer Reviews ({reviews?.length || 0})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {reviews && reviews.length > 0 ? (
-              <div className="space-y-4">
-                {reviews.map(review => (
-                  <div key={review.id} className="border-b pb-4 last:border-b-0">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="font-semibold">{review.title}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < review.rating
-                                  ? "text-yellow-400 fill-current"
-                                  : "text-gray-300"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <p className="text-gray-700">{review.content}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-600">No reviews yet. Be the first to review!</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+        {/* Inquiry Form */}
+        {showInquiryForm && (
+          <Card className="p-8">
+            <h3 className="text-2xl font-bold mb-4">Send Inquiry</h3>
+            <textarea
+              value={inquiryMessage}
+              onChange={(e) => setInquiryMessage(e.target.value)}
+              placeholder="Tell the vendor about your needs..."
+              className="w-full p-4 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-pink-600"
+              rows={5}
+            />
+            <Button
+              onClick={handleSendInquiry}
+              className="bg-pink-600 hover:bg-pink-700 w-full"
+            >
+              Send Inquiry
+            </Button>
+          </Card>
+        )}
+      </main>
     </div>
   );
 }

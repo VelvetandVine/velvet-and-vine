@@ -1,38 +1,50 @@
+import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
-import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 import Home from "./pages/Home";
 import Marketplace from "./pages/Marketplace";
 import VendorDetails from "./pages/VendorDetails";
 import MyInquiries from "./pages/MyInquiries";
 
-function Router() {
-  return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/marketplace"} component={Marketplace} />
-      <Route path={"/vendor/:id"} component={VendorDetails} />
-      <Route path={"/my-inquiries"} component={MyInquiries} />
-      <Route path={"/404"} component={NotFound} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
+type Page = "home" | "marketplace" | "vendor" | "inquiries";
 
-function App() {
+export default function App() {
+  const [currentPage, setCurrentPage] = useState<Page>("home");
+  const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
+
+  const handleNavigate = (page: Page, vendorId?: number) => {
+    setCurrentPage(page);
+    if (vendorId) {
+      setSelectedVendorId(vendorId);
+    }
+  };
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <div className="min-h-screen bg-background text-foreground">
+            {currentPage === "home" && (
+              <Home onNavigate={handleNavigate} />
+            )}
+            {currentPage === "marketplace" && (
+              <Marketplace onNavigate={handleNavigate} />
+            )}
+            {currentPage === "vendor" && selectedVendorId && (
+              <VendorDetails 
+                vendorId={selectedVendorId} 
+                onNavigate={handleNavigate}
+              />
+            )}
+            {currentPage === "inquiries" && (
+              <MyInquiries onNavigate={handleNavigate} />
+            )}
+          </div>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
 }
-
-export default App;

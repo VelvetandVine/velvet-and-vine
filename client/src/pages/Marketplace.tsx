@@ -1,218 +1,257 @@
-import { useState } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, MapPin, DollarSign, Star, Heart, ArrowLeft } from "lucide-react";
-import { trpc } from "@/lib/trpc";
-import { useLocation } from "wouter";
+import { Badge } from "@/components/ui/badge";
+import { Heart, ArrowLeft, Star } from "lucide-react";
 
-const VENDOR_CATEGORIES = [
-  "photographer",
-  "videographer",
-  "venue",
-  "catering",
-  "florist",
-  "decorator",
-  "dj",
-  "band",
-  "planner",
-  "makeup",
-  "transportation",
-  "other",
+interface Vendor {
+  id: number;
+  name: string;
+  category: string;
+  rating: number;
+  reviews: number;
+  price: string;
+  location: string;
+  image: string;
+  verified: boolean;
+}
+
+const SAMPLE_VENDORS: Vendor[] = [
+  {
+    id: 1,
+    name: "Elegant Photography",
+    category: "Photography",
+    rating: 4.9,
+    reviews: 127,
+    price: "$2,500 - $5,000",
+    location: "New York, NY",
+    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=300&fit=crop",
+    verified: true,
+  },
+  {
+    id: 2,
+    name: "Grand Ballroom Venue",
+    category: "Venue",
+    rating: 4.8,
+    reviews: 89,
+    price: "$3,000 - $8,000",
+    location: "Manhattan, NY",
+    image: "https://images.unsplash.com/photo-1519167758481-83f19106c6b6?w=400&h=300&fit=crop",
+    verified: true,
+  },
+  {
+    id: 3,
+    name: "Sweet Delights Catering",
+    category: "Catering",
+    rating: 4.7,
+    reviews: 156,
+    price: "$75 - $150 per person",
+    location: "Brooklyn, NY",
+    image: "https://images.unsplash.com/photo-1555939594-58d7cb561404?w=400&h=300&fit=crop",
+    verified: true,
+  },
+  {
+    id: 4,
+    name: "Bloom & Petals Florist",
+    category: "Flowers",
+    rating: 4.9,
+    reviews: 203,
+    price: "$1,500 - $3,500",
+    location: "Queens, NY",
+    image: "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=300&fit=crop",
+    verified: true,
+  },
+  {
+    id: 5,
+    name: "Harmony Music & DJ",
+    category: "Entertainment",
+    rating: 4.6,
+    reviews: 98,
+    price: "$1,000 - $2,500",
+    location: "New York, NY",
+    image: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&h=300&fit=crop",
+    verified: false,
+  },
+  {
+    id: 6,
+    name: "Glamour Beauty Studio",
+    category: "Beauty",
+    rating: 4.8,
+    reviews: 142,
+    price: "$200 - $500",
+    location: "Manhattan, NY",
+    image: "https://images.unsplash.com/photo-1487412912498-71f79b5f3569?w=400&h=300&fit=crop",
+    verified: true,
+  },
 ];
 
-export default function Marketplace() {
-  const { isAuthenticated, loading } = useAuth();
-  const [, setLocation] = useLocation();
-  const [category, setCategory] = useState<string>("");
-  const [keyword, setKeyword] = useState<string>("");
-  const [location, setLocation_] = useState<string>("");
+interface MarketplaceProps {
+  onNavigate: (page: "home" | "vendor", vendorId?: number) => void;
+}
 
-  const { data: vendors, isLoading } = trpc.marketplace.searchVendors.useQuery({
-    category: category || undefined,
-    keyword: keyword || undefined,
-    location: location || undefined,
-    limit: 50,
-  });
+export default function Marketplace({ onNavigate }: MarketplaceProps) {
+  const [vendors] = useState<Vendor[]>(SAMPLE_VENDORS);
+  const [filteredVendors, setFilteredVendors] = useState<Vendor[]>(SAMPLE_VENDORS);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [savedVendors, setSavedVendors] = useState<number[]>([]);
 
-  const { data: savedVendors } = trpc.marketplace.getSavedVendors.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
+  const categories = ["All", "Photography", "Venue", "Catering", "Flowers", "Entertainment", "Beauty"];
 
-  const saveVendorMutation = trpc.marketplace.saveVendor.useMutation();
-  const unsaveVendorMutation = trpc.marketplace.unsaveVendor.useMutation();
-
-  const savedVendorIds = new Set(savedVendors?.map(v => v.id) || []);
-
-  const handleToggleSave = (vendorId: number) => {
-    if (savedVendorIds.has(vendorId)) {
-      unsaveVendorMutation.mutate(vendorId);
-    } else {
-      saveVendorMutation.mutate(vendorId);
+  useEffect(() => {
+    const saved = localStorage.getItem("savedVendors");
+    if (saved) {
+      setSavedVendors(JSON.parse(saved));
     }
-  };
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="animate-spin text-pink-600 w-8 h-8" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    let filtered = vendors;
+
+    if (selectedCategory !== "All") {
+      filtered = filtered.filter((v) => v.category === selectedCategory);
+    }
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (v) =>
+          v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          v.category.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredVendors(filtered);
+  }, [searchTerm, selectedCategory, vendors]);
+
+  const toggleSaveVendor = (vendorId: number) => {
+    const updated = savedVendors.includes(vendorId)
+      ? savedVendors.filter((id) => id !== vendorId)
+      : [...savedVendors, vendorId];
+    setSavedVendors(updated);
+    localStorage.setItem("savedVendors", JSON.stringify(updated));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <Button
-            variant="ghost"
-            onClick={() => setLocation("/") as any}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <h1 className="text-3xl font-bold text-gray-900">Vendor Marketplace</h1>
-          <p className="text-gray-600 mt-2">Find and connect with the perfect vendors for your wedding</p>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white border-b border-gray-200 sticky top-16 z-9">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
-                {VENDOR_CATEGORIES.map(cat => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Input
-              placeholder="Search vendors..."
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-            />
-
-            <Input
-              placeholder="Location..."
-              value={location}
-              onChange={(e) => setLocation_(e.target.value)}
-            />
-
+      <header className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <Button
-              onClick={() => {
-                setCategory("");
-                setKeyword("");
-                setLocation_("");
-              }}
-              variant="outline"
+              variant="ghost"
+              onClick={() => onNavigate("home")}
+              className="p-0"
             >
-              Clear Filters
+              <ArrowLeft className="w-6 h-6" />
             </Button>
+            <h1 className="text-2xl font-bold text-pink-600">Vendor Marketplace</h1>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Vendors Grid */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="animate-spin text-pink-600 w-8 h-8" />
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Search and Filter */}
+        <div className="mb-8">
+          <Input
+            placeholder="Search vendors..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="mb-4 w-full"
+          />
+
+          <div className="flex gap-2 flex-wrap">
+            {categories.map((cat) => (
+              <Button
+                key={cat}
+                variant={selectedCategory === cat ? "default" : "outline"}
+                onClick={() => setSelectedCategory(cat)}
+                className={selectedCategory === cat ? "bg-pink-600" : ""}
+              >
+                {cat}
+              </Button>
+            ))}
           </div>
-        ) : vendors && vendors.length > 0 ? (
+        </div>
+
+        {/* Vendors Grid */}
+        {filteredVendors.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {vendors.map((vendor: any) => (
-              <Card key={vendor.id} className="bg-white hover:shadow-lg transition-shadow overflow-hidden">
-                {vendor.image && (
-                  <div className="h-48 bg-gray-200 overflow-hidden">
-                    <img src={vendor.image} alt={vendor.name} className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{vendor.name}</CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {vendor.category.charAt(0).toUpperCase() + vendor.category.slice(1)}
-                      </p>
+            {filteredVendors.map((vendor) => (
+              <Card
+                key={vendor.id}
+                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              >
+                <div className="h-48 bg-gray-200 overflow-hidden relative">
+                  <img
+                    src={vendor.image}
+                    alt={vendor.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSaveVendor(vendor.id);
+                    }}
+                    className="absolute top-2 right-2 bg-white rounded-full p-2 hover:bg-gray-100"
+                  >
+                    <Heart
+                      className={`w-5 h-5 ${
+                        savedVendors.includes(vendor.id)
+                          ? "fill-pink-600 text-pink-600"
+                          : "text-gray-400"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-semibold text-lg">{vendor.name}</h3>
+                      <p className="text-sm text-gray-600">{vendor.category}</p>
                     </div>
-                    {isAuthenticated && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleSave(vendor.id)}
-                        className={savedVendorIds.has(vendor.id) ? "text-red-600" : ""}
-                      >
-                        <Heart className={`w-5 h-5 ${savedVendorIds.has(vendor.id) ? "fill-current" : ""}`} />
-                      </Button>
+                    {vendor.verified && (
+                      <Badge className="bg-blue-100 text-blue-800">Verified</Badge>
                     )}
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {vendor.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2">{vendor.description}</p>
-                  )}
 
-                  {/* Rating */}
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="font-semibold">{vendor.rating || "0"}</span>
-                    <span className="text-sm text-gray-600">({vendor.reviewCount || 0} reviews)</span>
+                  <div className="flex items-center gap-1 mb-2">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < Math.floor(vendor.rating)
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-semibold">{vendor.rating}</span>
+                    <span className="text-sm text-gray-600">({vendor.reviews})</span>
                   </div>
 
-                  {/* Location */}
-                  {vendor.location && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="w-4 h-4" />
-                      {vendor.location}
-                    </div>
-                  )}
+                  <p className="text-sm text-gray-600 mb-2">{vendor.location}</p>
+                  <p className="font-semibold text-pink-600 mb-4">{vendor.price}</p>
 
-                  {/* Price */}
-                  {(vendor.priceMin || vendor.priceMax) && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <DollarSign className="w-4 h-4" />
-                      {vendor.priceMin && `$${vendor.priceMin}`}
-                      {vendor.priceMin && vendor.priceMax && " - "}
-                      {vendor.priceMax && `$${vendor.priceMax}`}
-                    </div>
-                  )}
-
-                  {/* Verification Badge */}
-                  {vendor.isVerified && (
-                    <div className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                      ✓ Verified
-                    </div>
-                  )}
-
-                  {/* View Details Button */}
                   <Button
-                    onClick={() => setLocation(`/vendor/${vendor.id}`) as any}
-                    className="w-full mt-4"
+                    onClick={() => onNavigate("vendor", vendor.id)}
+                    className="w-full bg-pink-600 hover:bg-pink-700"
                   >
                     View Details
                   </Button>
-                </CardContent>
+                </div>
               </Card>
             ))}
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">No vendors found. Try adjusting your filters.</p>
+            <p className="text-gray-600 text-lg">No vendors found</p>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
